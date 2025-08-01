@@ -1,0 +1,23 @@
+# Pythonキャッシュ
+__pycache__/
+*.pyc
+backend/.cache
+
+# 環境変数ファイル
+backend/.env
+frontend/.env
+
+# Node_modules
+frontend/node_modules/
+
+# Docker関連
+*.log
+*.pid
+
+# IDEやエディタ関連
+.vscode/
+.idea/
+
+# OS固有ファイル
+.DS_Store
+Thumbs.db
