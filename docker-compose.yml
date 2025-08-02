@@ -5,6 +5,8 @@ services:
     build: 
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        USER: ${USER}   
     env_file:
       - ./backend/.env
     ports:
@@ -16,6 +18,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        USER: ${USER}       
+        USER_UID: 2000
+        USER_GID: 2000
     env_file:
       - ./frontend/.env
     ports:
