@@ -27,11 +27,8 @@ def callback(code: str):
     token_info = sp_oauth.get_access_token(code)
     return token_info
 
+# デバック用
 @router.get("/me")
-def get_current_user():
-    # （テスト用に直書き：実際はCookieやセッションから取得する）
-    access_token = os.getenv("TEST_ACCESS_TOKEN")
-    
+def get_current_user(access_token: str):
     sp = spotipy.Spotify(auth=access_token)
-    user_info = sp.current_user()
-    return user_info
+    return sp.current_user()
