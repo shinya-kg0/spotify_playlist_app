@@ -1,10 +1,9 @@
 from fastapi import FastAPI
 from app.api import auth
 
+from app.utils.token_utils import TokenManager
+
 app = FastAPI()
 
-app.include_router(auth.router)
-
-@app.get("/")
-def root():
-    return {"message": "Backend is running 🚀"}
+# ルーター登録
+app.include_router(auth.router, prefix="/auth")
