@@ -1,6 +1,7 @@
 import spotipy
 from typing import List, Optional, Dict, Any
 import asyncio
+from app.schemas import Track, TrackQuery
 
 class SpotifyService:
     def __init__(self, access_token: str):
@@ -12,7 +13,7 @@ class SpotifyService:
         """
         return self.sp.current_user()["id"]
 
-    def create_playlist(self, user_id: str, name: str, public: bool, description: str, track_uris: List[str]) -> Dict[str, Any]:
+    def create_playlist_and_add_tracks(self, user_id: str, name: str, public: bool, description: str, track_uris: List[str]) -> Dict[str, Any]:
         """
         新しいプレイリストを作成し、指定されたトラックを追加します。
         """
@@ -26,13 +27,16 @@ class SpotifyService:
 
         playlist_id = playlist["id"]
 
-        # トラックを追加（URIsが存在する場合のみ）
+        # トラックURIが提供されていれば、新しいプレイリストに追加
         if track_uris:
-            self.sp.playlist_add_items(playlist_id, track_uris)
+            # Spotify APIは一度に100曲までしか追加できないため、100件ずつに分割してリクエスト
+            for i in range(0, len(track_uris), 100):
+                chunk = track_uris[i:i+100]
+                self.sp.playlist_add_items(playlist_id, chunk)
 
         return playlist
         
-    def search_track(self, track_name: str, artist_name: Optional[str] = None) -> List[dict]:
+    def search_track(self, track_name: str, artist_name: Optional[str] = None) -> List[Track]:
         """
         曲名とアーティスト名（任意）でトラックを検索します。
         """
@@ -42,43 +46,42 @@ class SpotifyService:
 
         results = self.sp.search(q=query, type="track", limit=5)
         tracks = [
-            {
-                "name": item["name"],
-                "artist": item["artists"][0]["name"],
-                "uri": item["uri"]
-            }
+            Track(
+                name=item["name"],
+                artist=item["artists"][0]["name"],
+                uri=item["uri"]
+            )
             for item in results["tracks"]["items"]
         ]
         return tracks
     
-    async def search_multiple_tracks(self, queries: List[Dict[str, Any]]):
+    async def search_multiple_tracks(self, queries: List[TrackQuery]) -> (List[Dict[str, Any]], List[TrackQuery]):
         """
         複数のクエリ（曲名とアーティスト名の辞書）で並行してトラックを検索します。
         """
         
-        def _search_sync(q: Dict[str, Any]):
-            """A helper function to wrap the synchronous search call."""
-            track_name = q.get("track")
-            artist_name = q.get("artist")
+        def _search_sync(q: TrackQuery) -> (TrackQuery, Optional[Dict[str, Any]]):
+            """同期検索の呼び出しをラップするヘルパー関数。"""
+            track_name = q.track
+            artist_name = q.artist
 
             if not track_name:
                 return q, None
-
+    
             query = f"track:{track_name}"
             if artist_name:
                 query += f" artist:{artist_name}"
 
             results = self.sp.search(q=query, type="track", limit=1)
             if results["tracks"]["items"]:
-                # Return the original query and the found track
+                # 元のクエリーと見つかったトラックを返す
                 return q, results["tracks"]["items"][0]
             else:
-                # Return the original query and None if not found
                 return q, None
 
-        # Create a list of asynchronous tasks
+        # 非同期タスクのリストを作成します。
         tasks = [asyncio.to_thread(_search_sync, q) for q in queries]
-        # Run all tasks in parallel
+        # すべてのタスクを並行して実行する
         search_results = await asyncio.gather(*tasks)
 
         found_tracks = []

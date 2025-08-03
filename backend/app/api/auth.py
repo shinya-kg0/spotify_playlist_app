@@ -1,44 +1,30 @@
-import os
-from datetime import datetime
-from dotenv import load_dotenv
-
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth
-from fastapi import APIRouter, Response, Request, HTTPException
+from fastapi import APIRouter, Response, Request, HTTPException, Depends, status
 from app.utils.token_utils import TokenManager
+from app.dependencies import get_token_manager, get_spotify_service
+from app.schemas import UserProfile
+from app.services.spotify_service import SpotifyService
 
 router = APIRouter()
 
-# 環境変数の読み込み
-load_dotenv(verbose=True)
-
-# SpotifyOAuthオブジェクトとTokenManager初期化
-token_manager = TokenManager(
-    client_id=os.environ.get("SPOTIPY_CLIENT_ID"),
-    client_secret=os.environ.get("SPOTIPY_CLIENT_SECRET"),
-    redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),
-    scope="playlist-modify-public playlist-modify-private"
-)
-
 @router.get("/login")
-def login():
+def login(token_manager: TokenManager = Depends(get_token_manager)):
+    """Spotifyの認証ページへのURLを取得します。"""
     auth_url = token_manager.get_auth_url()
     return {"auth_url": auth_url}
 
 @router.get("/callback")
-def callback(code: str, response: Response):
+def callback(code: str, response: Response, token_manager: TokenManager = Depends(get_token_manager)):
+    """Spotifyからのコールバックを処理し、トークンをCookieに保存します。"""
     token_info = token_manager.exchange_code_for_token(code)
     token_manager.set_tokens_in_cookie(response, token_info)
     return {"message": "認証に成功しました。"}
 
-@router.get("/me")
-def get_current_user(request: Request, response: Response):
-    access_token = token_manager.get_valid_access_token(request, response)
-    sp = spotipy.Spotify(auth=access_token)
-    try:
-        return sp.current_user()
-    except spotipy.exceptions.SpotifyException as e:
-        if e.http_status == 401: # Invalid access token
-            raise HTTPException(status_code=401, detail="認証が必要です。再度ログインしてください。")
-        else:
-            raise HTTPException(status_code=500, detail="Spotify APIでエラーが発生しました。")
+@router.get("/me", response_model=UserProfile)
+def get_current_user(spotify_service: SpotifyService = Depends(get_spotify_service)):
+    """
+    現在認証しているユーザーのプロフィール情報を返します。
+    認証は `get_spotify_service` 依存関係によって処理されます。
+    """
+    user_data = spotify_service.sp.current_user()
+    return UserProfile.model_validate(user_data)
