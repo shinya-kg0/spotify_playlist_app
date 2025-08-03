@@ -5,6 +5,32 @@ import asyncio
 class SpotifyService:
     def __init__(self, access_token: str):
         self.sp = spotipy.Spotify(auth=access_token)
+
+    def get_current_user_id(self) -> str:
+        """
+        現在の認証済みユーザーのIDを取得します。
+        """
+        return self.sp.current_user()["id"]
+
+    def create_playlist(self, user_id: str, name: str, public: bool, description: str, track_uris: List[str]) -> Dict[str, Any]:
+        """
+        新しいプレイリストを作成し、指定されたトラックを追加します。
+        """
+        # 新しいプレイリストを作成
+        playlist = self.sp.user_playlist_create(
+            user=user_id,
+            name=name,
+            public=public,
+            description=description
+        )
+
+        playlist_id = playlist["id"]
+
+        # トラックを追加（URIsが存在する場合のみ）
+        if track_uris:
+            self.sp.playlist_add_items(playlist_id, track_uris)
+
+        return playlist
         
     def search_track(self, track_name: str, artist_name: Optional[str] = None) -> List[dict]:
         """
