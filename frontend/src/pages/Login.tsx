@@ -8,8 +8,7 @@ function Login() {
     try {
       setLoading(true);
       setError(null);
-      const apiUrl = import.meta.env.VITE_API_BASE_URL;
-      const res = await fetch(`${apiUrl}/auth/login`, {
+      const res = await fetch(`/api/auth/login`, {
         method: "GET",
         credentials: "include",
       });

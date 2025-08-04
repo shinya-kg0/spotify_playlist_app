@@ -1,11 +1,16 @@
 import spotipy
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 import asyncio
-from app.schemas import Track, TrackQuery
+from app.schemas import Track, TrackQuery, Playlist, UserProfile
 
 class SpotifyService:
     def __init__(self, access_token: str):
         self.sp = spotipy.Spotify(auth=access_token)
+
+    def get_current_user_profile(self) -> UserProfile:
+        """現在のユーザープロファイルを取得し、UserProfileモデルとして返します。"""
+        user_data = self.sp.current_user()
+        return UserProfile.model_validate(user_data)
 
     def get_current_user_id(self) -> str:
         """
@@ -13,7 +18,7 @@ class SpotifyService:
         """
         return self.sp.current_user()["id"]
 
-    def create_playlist_and_add_tracks(self, user_id: str, name: str, public: bool, description: str, track_uris: List[str]) -> Dict[str, Any]:
+    def create_playlist_and_add_tracks(self, user_id: str, name: str, public: bool, description: str, track_uris: List[str]) -> Playlist:
         """
         新しいプレイリストを作成し、指定されたトラックを追加します。
         """
@@ -33,8 +38,15 @@ class SpotifyService:
             for i in range(0, len(track_uris), 100):
                 chunk = track_uris[i:i+100]
                 self.sp.playlist_add_items(playlist_id, chunk)
-
-        return playlist
+        
+        # 最新のプレイリスト情報を取得して返す
+        fresh_playlist_data = self.sp.playlist(playlist_id)
+        return Playlist(
+            id=fresh_playlist_data.get("id"),
+            name=fresh_playlist_data.get("name"),
+            url=fresh_playlist_data.get("external_urls", {}).get("spotify"),
+            track_count=fresh_playlist_data.get("tracks", {}).get("total", 0)
+        )
         
     def search_track(self, track_name: str, artist_name: Optional[str] = None) -> List[Track]:
         """
@@ -47,23 +59,24 @@ class SpotifyService:
         results = self.sp.search(q=query, type="track", limit=5)
         tracks = [
             Track(
+                id=item["id"],
                 name=item["name"],
-                artist=item["artists"][0]["name"],
+                artist=item["artists"][0]["name"] if item.get("artists") else None,
                 uri=item["uri"]
             )
             for item in results["tracks"]["items"]
         ]
         return tracks
     
-    async def search_multiple_tracks(self, queries: List[TrackQuery]) -> (List[Dict[str, Any]], List[TrackQuery]):
+    async def search_multiple_tracks(self, queries: List[TrackQuery]) -> Tuple[List[Track], List[TrackQuery]]:
         """
         複数のクエリ（曲名とアーティスト名の辞書）で並行してトラックを検索します。
         """
         
-        def _search_sync(q: TrackQuery) -> (TrackQuery, Optional[Dict[str, Any]]):
+        def _search_sync(q: TrackQuery) -> Tuple[TrackQuery, Optional[Track]]:
             """同期検索の呼び出しをラップするヘルパー関数。"""
-            track_name = q.track
-            artist_name = q.artist
+            track_name = q.track_name
+            artist_name = q.artist_name
 
             if not track_name:
                 return q, None
@@ -74,8 +87,14 @@ class SpotifyService:
 
             results = self.sp.search(q=query, type="track", limit=1)
             if results["tracks"]["items"]:
-                # 元のクエリーと見つかったトラックを返す
-                return q, results["tracks"]["items"][0]
+                item = results["tracks"]["items"][0]
+                track = Track(
+                    id=item["id"],
+                    name=item["name"],
+                    artist=item["artists"][0]["name"] if item.get("artists") else None,
+                    uri=item["uri"]
+                )
+                return q, track
             else:
                 return q, None
 

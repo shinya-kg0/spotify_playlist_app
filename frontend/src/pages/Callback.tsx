@@ -1,40 +1,53 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 function Callback() {
   const navigate = useNavigate();
-  const [message, setMessage] = useState("認証情報を確認中...");
+  const [searchParams] = useSearchParams();
+  const [message, setMessage] = useState("認証処理を実行中...");
 
   useEffect(() => {
-    const verifyLogin = async () => {
+    const exchangeCodeForToken = async (code: string) => {
       try {
-        const apiUrl = import.meta.env.VITE_API_BASE_URL;
-        // バックエンドに認証状態の確認をリクエスト
-        const res = await fetch(`${apiUrl}/me`, {
-          method: "GET",
-          credentials: "include", // Cookieを送信するために必要
+        // バックエンドに認可コードを送信してトークンを要求
+        const res = await fetch(`/api/auth/token`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ code }),
         });
 
-        if (res) {
-          // 認証成功
-          setMessage("認証完了！リダイレクト中...");
-          // ユーザー情報を取得して状態管理ライブラリ（Context, Reduxなど）に保存することも可能
-          // const user = await res.json();
-          navigate("/setlist"); // 次のページへ
+        if (res.ok) {
+          const user = await res.json();
+          console.log("ログイン成功:", user);
+          setMessage("認証完了！リダイレクトします...");
+          navigate("/setlist"); // 成功したら次のページへ
         } else {
-          // 認証失敗
-          setMessage("認証に失敗しました。ログインページに戻ります。");
+          const errorData = await res.json();
+          setMessage(`認証に失敗しました: ${errorData.detail || '不明なエラー'}`);
           setTimeout(() => navigate("/login"), 3000);
         }
       } catch (error) {
         setMessage("エラーが発生しました。ログインページに戻ります。");
-        console.error("Error during user verification:", error);
+        console.error("Error during token exchange:", error);
         setTimeout(() => navigate("/login"), 3000);
       }
     };
 
-    verifyLogin();
-  }, [navigate]);
+    const code = searchParams.get("code");
+    const error = searchParams.get("error");
+
+    if (error) {
+      setMessage(`認証がキャンセルされました: ${error}`);
+      setTimeout(() => navigate("/login"), 3000);
+    } else if (code) {
+      exchangeCodeForToken(code);
+    } else {
+      setMessage("認可コードが見つかりません。ログインページに戻ります。");
+      setTimeout(() => navigate("/login"), 3000);
+    }
+  }, [navigate, searchParams]);
 
   return <div>{message}</div>;
 }

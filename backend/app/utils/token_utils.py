@@ -31,11 +31,22 @@ class TokenManager:
         expires_in = token_info["expires_in"]
         refresh_token = token_info.get("refresh_token")
         expires_at = token_info.get("expires_at", int(time.time()) + expires_in)
+        
+        # Cookieの共通設定
+        # 開発環境では secure=False に設定します。本番環境でHTTPSを使う場合はTrueにします。
+        # path="/" を設定することで、アプリケーション内のどのパスへのリクエストにも
+        # Cookieが送信されるようになります。
+        common_params = {
+            "httponly": True,
+            "secure": False, # 開発中はFalse, 本番(HTTPS)ではTrue
+            "samesite": "lax", # 開発中はlax, 本番(HTTPS)ではlaxまたはstrict
+            "path": "/",
+        }
 
-        response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite="lax", max_age=3600)
+        response.set_cookie(key="access_token", value=access_token, max_age=expires_in, **common_params)
         if refresh_token:
-            response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True, samesite="lax")
-        response.set_cookie(key="expires_at", value=str(expires_at), httponly=True, secure=True, samesite="lax")
+            response.set_cookie(key="refresh_token", value=refresh_token, **common_params)
+        response.set_cookie(key="expires_at", value=str(expires_at), **common_params)
 
     def get_valid_access_token(self, request: Request, response: Response):
         """
@@ -44,20 +55,29 @@ class TokenManager:
         有効なトークンが取得できない場合はHTTPExceptionを送出します。
         """
         access_token = request.cookies.get("access_token")
+        expires_at_str = request.cookies.get("expires_at")
+
+        # 1. アクセストークンがなければ、即座に認証失敗
+        if not access_token:
+            raise HTTPException(status_code=401, detail="アクセストークンが見つかりません。ログインしてください。")
+
+        # 2. トークンの有効期限をチェック (expires_atがない場合は安全のため期限切れとみなす)
+        is_expired = True
+        if expires_at_str:
+            is_expired = datetime.now().timestamp() > float(expires_at_str) - 60
+        
+        # 3. 有効期限内であれば、現在のトークンを返す
+        if not is_expired:
+            return access_token
+
+        # 4. トークンが期限切れの場合、リフレッシュを試みる
         refresh_token = request.cookies.get("refresh_token")
-        expires_at = request.cookies.get("expires_at")
-
-        if not access_token or not refresh_token or not expires_at:
-            raise HTTPException(status_code=401, detail="認証されていません。")
-
-        # トークンの有効期限が残り60秒未満かチェック
-        is_expired = datetime.now().timestamp() > float(expires_at) - 60
-        if is_expired:
-            try:
-                new_token_info = self.refresh_token_if_needed(refresh_token)
-                self.set_tokens_in_cookie(response, new_token_info)
-                access_token = new_token_info["access_token"]
-            except Exception as e:
-                raise HTTPException(status_code=401, detail=f"トークンのリフレッシュに失敗しました: {e}")
-
-        return access_token
+        if not refresh_token:
+            raise HTTPException(status_code=401, detail="セッションの有効期限が切れました。再度ログインしてください。")
+        
+        try:
+            new_token_info = self.refresh_token_if_needed(refresh_token)
+            self.set_tokens_in_cookie(response, new_token_info)
+            return new_token_info["access_token"]
+        except Exception as e:
+            raise HTTPException(status_code=401, detail=f"トークンのリフレッシュに失敗しました: {e}")

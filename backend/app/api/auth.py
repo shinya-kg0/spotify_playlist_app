@@ -4,7 +4,7 @@ from fastapi import APIRouter, Response, Request, HTTPException, Depends, status
 from fastapi.responses import RedirectResponse
 from app.utils.token_utils import TokenManager
 from app.dependencies import get_token_manager, get_spotify_service
-from app.schemas import UserProfile
+from app.schemas import TokenRequest, UserProfile
 from app.services.spotify_service import SpotifyService
 from dotenv import load_dotenv
 
@@ -20,13 +20,21 @@ def login(token_manager: TokenManager = Depends(get_token_manager)):
     auth_url = token_manager.get_auth_url()
     return {"auth_url": auth_url}
 
-@router.get("/callback")
-def callback(code: str, response: Response, token_manager: TokenManager = Depends(get_token_manager)) -> RedirectResponse:
-    """Spotifyからのコールバックを処理し、トークンをCookieに保存後、フロントエンドにリダイレクトします。"""
-    token_info = token_manager.exchange_code_for_token(code)
-    token_manager.set_tokens_in_cookie(response, token_info)
-    # フロントエンドのコールバック処理用ページにリダイレクト
-    return RedirectResponse(url=f"{FRONTEND_URL}/callback")
+@router.post("/token", response_model=UserProfile)
+def exchange_token(token_request: TokenRequest, response: Response, token_manager: TokenManager = Depends(get_token_manager)):
+    """
+    フロントエンドから受け取った認可コードをトークンと交換し、Cookieに保存します。
+    成功時にはユーザー情報を返します。
+    """
+    try:
+        token_info = token_manager.exchange_code_for_token(token_request.code)
+        token_manager.set_tokens_in_cookie(response, token_info)
+        # Cookie設定後、そのトークンを使ってユーザー情報を取得して返す
+        sp = spotipy.Spotify(auth=token_info['access_token'])
+        user_data = sp.current_user()
+        return UserProfile.model_validate(user_data)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"トークンの交換に失敗しました: {e}")
 
 @router.get("/me", response_model=UserProfile)
 def get_current_user(spotify_service: SpotifyService = Depends(get_spotify_service)):

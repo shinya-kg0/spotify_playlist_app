@@ -1,19 +1,23 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Callback from "./pages/Callback";
-import Setlist from "./pages/Setlist";
-
+import Setlist from "./pages/Setlist"; // 今後作成するページ
 
 function App() {
   return (
-    <Router>
+    <BrowserRouter>
       <Routes>
+        {/* ログインページ */}
         <Route path="/login" element={<Login />} />
-        <Route path="/callback" element={<Callback />} />
+        {/* Spotifyからのコールバックを受け取るページ */}
+        <Route path="/auth/callback" element={<Callback />} />
+        {/* ログイン後のメインページ（今後作成） */}
         <Route path="/setlist" element={<Setlist />} />
+        {/* デフォルトはログインページに */}
+        <Route path="/" element={<Login />} />
       </Routes>
-    </Router>
-  )
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
