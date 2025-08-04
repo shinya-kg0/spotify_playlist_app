@@ -4,10 +4,14 @@ from app.utils.token_utils import TokenManager
 from app.services.spotify_service import SpotifyService
 import spotipy
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # .envファイルから設定を読み込み
 CLIENT_ID = os.environ.get("SPOTIPY_CLIENT_ID")
 CLIENT_SECRET = os.environ.get("SPOTIPY_CLIENT_SECRET")
-REDIRECT_URI = os.getenv("SPOTIPY_REDIRECT_URI")
+REDIRECT_URI = os.environ.get("SPOTIPY_REDIRECT_URI")
 SCOPE = "playlist-modify-public playlist-modify-private"
 
 # アプリケーション全体で共有するTokenManagerのシングルトンインスタンス

@@ -1,11 +1,18 @@
+import os
 import spotipy
 from fastapi import APIRouter, Response, Request, HTTPException, Depends, status
+from fastapi.responses import RedirectResponse
 from app.utils.token_utils import TokenManager
 from app.dependencies import get_token_manager, get_spotify_service
 from app.schemas import UserProfile
 from app.services.spotify_service import SpotifyService
+from dotenv import load_dotenv
+
+load_dotenv()
 
 router = APIRouter()
+
+FRONTEND_URL = os.environ.get("FRONTEND_URL")
 
 @router.get("/login")
 def login(token_manager: TokenManager = Depends(get_token_manager)):
@@ -14,11 +21,12 @@ def login(token_manager: TokenManager = Depends(get_token_manager)):
     return {"auth_url": auth_url}
 
 @router.get("/callback")
-def callback(code: str, response: Response, token_manager: TokenManager = Depends(get_token_manager)):
-    """Spotifyからのコールバックを処理し、トークンをCookieに保存します。"""
+def callback(code: str, response: Response, token_manager: TokenManager = Depends(get_token_manager)) -> RedirectResponse:
+    """Spotifyからのコールバックを処理し、トークンをCookieに保存後、フロントエンドにリダイレクトします。"""
     token_info = token_manager.exchange_code_for_token(code)
     token_manager.set_tokens_in_cookie(response, token_info)
-    return {"message": "認証に成功しました。"}
+    # フロントエンドのコールバック処理用ページにリダイレクト
+    return RedirectResponse(url=f"{FRONTEND_URL}/callback")
 
 @router.get("/me", response_model=UserProfile)
 def get_current_user(spotify_service: SpotifyService = Depends(get_spotify_service)):
