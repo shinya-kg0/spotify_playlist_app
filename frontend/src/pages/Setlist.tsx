@@ -1,10 +1,17 @@
 import { useEffect, useState, type ChangeEvent } from "react";
-import { Box, Button, Field, Input, VStack, Heading, Text, Spinner, Alert, Center } from "@chakra-ui/react";
+import { Box, Button, Field, Input, VStack, Heading, Text, Spinner, Alert, List, Center, ListItem, HStack } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 
 interface UserProfile {
   id: string;
   display_name: string;
+}
+
+interface Track {
+  id: string;
+  name: string;
+  artist: string;
+  uri: string;
 }
 
 function Setlist() {
@@ -14,19 +21,18 @@ function Setlist() {
 
   const [trackName, setTrackName] = useState("");
   const [artistName, setArtistName] = useState("");
+  const [tracks, setTracks] = useState<Track[]>([]);
 
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        // バックエンドに現在のユーザー情報を要求
         const res = await fetch("/api/auth/me");
         if (res.ok) {
           const userData = await res.json();
           setUser(userData);
         } else if (res.status === 401) {
-          // 認証されていない場合はログインページにリダイレクト
           setError("認証されていません。ログインページにリダイレクトします。");
           setTimeout(() => navigate("/login"), 3000);
         } else {
@@ -44,6 +50,26 @@ function Setlist() {
     fetchUser();
   }, [navigate]);
 
+  const handleSearch = async () => {
+    try {
+      const query = new URLSearchParams();
+      query.append("track_name", trackName);
+      if (artistName) query.append("artist_name", artistName);
+
+      const res = await fetch(`/api/playlist/search?${query.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setTracks(data);
+      } else {
+        const errorData = await res.json();
+        setError(errorData.detail || "検索に失敗しました。");
+      }
+    } catch (err) {
+      setError("検索中にエラーが発生しました。");
+      console.error("Failed to search track:", err);
+    }
+  };
+
   if (loading) {
     return (
       <Center h="100vh">
@@ -59,7 +85,7 @@ function Setlist() {
       </Heading>
       {user && <Text textAlign="center" mb={4}>ようこそ, {user.display_name} さん！</Text>}
       {error && (
-        <Alert.Root status="error">
+        <Alert.Root status="error" mb={4}>
           <Alert.Indicator />
           <Alert.Title>{error}</Alert.Title>
         </Alert.Root>
@@ -68,14 +94,6 @@ function Setlist() {
         曲を検索してプレイリストに追加しましょう
       </Text>
       <VStack>
-        <Field.Root> {/* FormControl → Field.Root */}
-          <Field.Label>曲名</Field.Label> {/* FormLabel → Field.Label */}
-          <Input
-            placeholder="Lemon"
-            value={trackName}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setTrackName(e.target.value)}
-          />
-        </Field.Root>
         <Field.Root>
           <Field.Label>アーティスト名（任意）</Field.Label>
           <Input
@@ -84,7 +102,34 @@ function Setlist() {
             onChange={(e: ChangeEvent<HTMLInputElement>) => setArtistName(e.target.value)}
           />
         </Field.Root>
-        <Button colorScheme="teal" width="full">検索</Button>
+        <Field.Root>
+          <Field.Label>曲名</Field.Label>
+          <Input
+            placeholder="Lemon"
+            value={trackName}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setTrackName(e.target.value)}
+          />
+        </Field.Root>
+        <Button colorScheme="teal" width="full" onClick={handleSearch}>検索</Button>
+
+        {tracks.length > 0 && (
+          <Box w="full" mt={4}>
+            <Heading as="h2" size="md" mb={2}>検索結果</Heading>
+            <List.Root>
+              {tracks.map((track) => (
+                <ListItem key={track.id} p={2} borderWidth={1} borderRadius="md">
+                  <HStack justify="space-between">
+                    <Box>
+                      <Text fontWeight="bold">{track.name}</Text>
+                      <Text fontSize="sm" color="gray.500">{track.artist}</Text>
+                    </Box>
+                    <Button size="sm" colorScheme="teal">追加</Button>
+                  </HStack>
+                </ListItem>
+              ))}
+            </List.Root>
+          </Box>
+        )}
       </VStack>
     </Box>
   );
