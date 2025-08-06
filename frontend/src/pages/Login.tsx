@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Box, Button, Heading, Center, VStack, Alert } from "@chakra-ui/react";
 
 function Login() {
   const [loading, setLoading] = useState(false);
@@ -30,13 +31,27 @@ function Login() {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Spotify Playlist App</h1>
-      <button onClick={handleLogin} disabled={loading}>
-        {loading ? "ログイン中、、、" : "Spotifyでログイン"}
-      </button>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-    </div>
+    <Center h="100vh">
+      <Box p={8} borderWidth={1} borderRadius="md" boxShadow="lg" textAlign="center">
+        <VStack>
+          <Heading as="h1" size="lg">Spotify Playlist App</Heading>
+          <Button
+            colorScheme="green"
+            onClick={handleLogin}
+            loading={loading}
+            loadingText="ログイン中..."
+          >
+            Spotifyでログイン
+          </Button>
+          {error && (
+            <Alert.Root status="error">
+              <Alert.Indicator />
+              <Alert.Title>{error}</Alert.Title>
+            </Alert.Root>
+          )}
+        </VStack>
+      </Box>
+    </Center>
   );
 }
 

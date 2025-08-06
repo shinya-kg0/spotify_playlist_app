@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Center, VStack, Spinner, Text } from "@chakra-ui/react";
 
 function Callback() {
   const navigate = useNavigate();
@@ -49,7 +50,14 @@ function Callback() {
     }
   }, [navigate, searchParams]);
 
-  return <div>{message}</div>;
+  return (
+    <Center h="100vh">
+      <VStack>
+        <Spinner size="xl" />
+        <Text>{message}</Text>
+      </VStack>
+    </Center>
+  );
 }
 
 export default Callback;
