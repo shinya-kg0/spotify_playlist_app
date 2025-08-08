@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Button, Heading, Center, VStack, Alert } from "@chakra-ui/react";
+import { Box, Button, Heading, Center, VStack, Alert, AlertIcon, AlertTitle } from "@chakra-ui/react";
 
 function Login() {
   const [loading, setLoading] = useState(false);
@@ -14,13 +14,17 @@ function Login() {
         credentials: "include",
       });
 
-      const data = await res.json();
-
-      if (data.auth_url) {
-        window.location.href = data.auth_url;
+      if (res.ok) {
+        const data = await res.json();
+        if (data.auth_url) {
+          window.location.href = data.auth_url;
+        } else {
+          setError("認証URLが取得できませんでした。");
+        }
       } else {
-        setError("認証URLが取得できませんでした。");
-        console.error("認証URLが取得できませんでした。");
+        const errorData = await res.json().catch(() => ({}));
+        const message = errorData.detail || `ログインに失敗しました (ステータス: ${res.status})`;
+        setError(message);
       }
     } catch (err) {
       setError("ログイン処理中にエラーが発生しました。");
@@ -38,16 +42,15 @@ function Login() {
           <Button
             colorScheme="green"
             onClick={handleLogin}
-            loading={loading}
+            isLoading={loading}
             loadingText="ログイン中..."
           >
             Spotifyでログイン
           </Button>
           {error && (
-            <Alert.Root status="error">
-              <Alert.Indicator />
-              <Alert.Title>{error}</Alert.Title>
-            </Alert.Root>
+            <Alert status="error" mt={4} borderRadius="md">
+              <AlertTitle>{error}</AlertTitle>
+            </Alert>
           )}
         </VStack>
       </Box>
