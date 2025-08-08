@@ -109,6 +109,59 @@ function Setlist() {
     }
   };
 
+  const handleCreatePlaylist = async () => {
+    if (!playlistName.trim()) {
+      toast({
+        title: "プレイリスト名を入力してください",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+        position: "top",
+      });
+      return;
+    }
+
+    setCreating(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/playlist/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: playlistName,
+          description: playlistDescription,
+          public: isPublic,
+          track_uris: playlistTracks.map((t) => t.uri),
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        navigate("/result", { state: { playlistUrl: data.url } });
+      } else {
+        const err = await res.json();
+        const errorMessage = err.detail || "プレイリストの作成に失敗しました。";
+        setError(errorMessage);
+      }
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "通信中にエラーが発生しました。";
+      setError(errorMessage);
+      toast({
+        title: "エラー",
+        description: errorMessage,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      });
+    } finally {
+      setCreating(false);
+    }
+  };
+
   if (loading) {
     return (
       <Center h="100vh">
@@ -127,6 +180,7 @@ function Setlist() {
           {user && <Text textAlign="center" color="gray.500">ようこそ, {user.display_name} さん！</Text>}
           {error && (
             <Alert status="error" mt={4} borderRadius="md">
+              <AlertIcon />
               <AlertTitle>{error}</AlertTitle>
             </Alert>
           )}
@@ -157,9 +211,9 @@ function Setlist() {
         </Box>
 
         {/* 2. 検索結果 & 3. プレイリストの曲 */}
-        <HStack spacing={8} align="start">
+        {/* <HStack spacing={8} align="start"> */}
           {/* 検索結果 */}
-          <Box p={6} borderWidth={1} borderRadius="lg" boxShadow="sm" w="50%">
+          <Box p={6} borderWidth={1} borderRadius="lg" boxShadow="sm" w="100%">
             <Heading as="h2" size="lg" mb={4}>2. 検索結果</Heading>
             <List spacing={3}>
               {tracks.map((track) => (
@@ -181,7 +235,7 @@ function Setlist() {
           </Box>
 
           {/* プレイリスト候補 */}
-          <Box p={6} borderWidth={1} borderRadius="lg" boxShadow="sm" w="50%">
+          <Box p={6} borderWidth={1} borderRadius="lg" boxShadow="sm" w="100%">
             <Heading as="h2" size="lg" mb={4}>3. プレイリストの曲</Heading>
             <List spacing={3}>
               {playlistTracks.map((track) => (
@@ -199,7 +253,60 @@ function Setlist() {
               ))}
             </List>
           </Box>
-        </HStack>
+        {/* </HStack> */}
+
+        {playlistTracks.length > 0 && (
+          <Box p={6} borderWidth={1} borderRadius="lg" boxShadow="sm">
+            <Heading as="h2" size="lg" mb={4}>4. プレイリストを作成</Heading>
+            <VStack spacing={4} align="stretch">
+              <FormControl isRequired>
+                <FormLabel>プレイリスト名</FormLabel>
+                <Input
+                  value={playlistName}
+                  onChange={(e) => setPlaylistName(e.target.value)}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel>説明 <Badge ml={1} colorScheme="gray">任意</Badge></FormLabel>
+                <Input
+                  placeholder="お気に入りの曲を集めました！"
+                  value={playlistDescription}
+                  onChange={(e) => setPlaylistDescription(e.target.value)}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel>公開設定</FormLabel>
+                <ButtonGroup w="full" size="md" isAttached>
+                  <Button
+                    w="full"
+                    variant={!isPublic ? 'solid' : 'outline'}
+                    colorScheme={!isPublic ? 'teal' : 'gray'}
+                    onClick={() => setIsPublic(false)}
+                  >
+                    非公開
+                  </Button>
+                  <Button
+                    w="full"
+                    variant={isPublic ? 'solid' : 'outline'}
+                    colorScheme={isPublic ? 'teal' : 'gray'}
+                    onClick={() => setIsPublic(true)}
+                  >
+                    公開
+                  </Button>
+                </ButtonGroup>
+              </FormControl>
+              <Button
+                colorScheme="teal"
+                size="lg"
+                isLoading={creating}
+                loadingText="作成中..."
+                onClick={handleCreatePlaylist}
+              >
+                プレイリストを作成する
+              </Button>
+            </VStack>
+          </Box>
+        )}
       </VStack>
     </Box>
   );

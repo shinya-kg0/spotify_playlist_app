@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Button, Heading, Center, VStack, Alert, AlertIcon, AlertTitle } from "@chakra-ui/react";
+import { Box, Button, Heading, Center, VStack, Alert, AlertTitle, Text } from "@chakra-ui/react";
 
 function Login() {
   const [loading, setLoading] = useState(false);
@@ -38,7 +38,8 @@ function Login() {
     <Center h="100vh">
       <Box p={8} borderWidth={1} borderRadius="md" boxShadow="lg" textAlign="center">
         <VStack>
-          <Heading as="h1" size="lg">Spotify Playlist App</Heading>
+          <Heading as="h1" size="lg" mb={4}>せとぷり！</Heading>
+          <Text mb={4}>セットリストからプレイリストへ</Text>
           <Button
             colorScheme="green"
             onClick={handleLogin}
