@@ -13,8 +13,10 @@ export const getBackendUrl = (): string => {
     // 開発環境：プロキシを使用するため空文字
     return '/api';
   } else if (isProduction) {
-    // 本番環境：環境変数から取得
-    return __BACKEND_URL__ || 'https://create-playlist-app-backend-e056e71d5a08.herokuapp.com';
+    // 本番環境：直接バックエンドのHeroku URLを指定
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://create-playlist-app-backend-e056e71d5a08.herokuapp.com';
+    console.log('Production backend URL:', backendUrl);
+    return backendUrl;
   } else {
     return '';
   }
@@ -24,7 +26,7 @@ export const getBackendUrl = (): string => {
 export const API_BASE_URL = getBackendUrl();
 
 // デバッグ用（開発環境でのみ表示）
-if (isDevelopment) {
-  console.log('Environment:', import.meta.env.MODE);
-  console.log('API Base URL:', API_BASE_URL);
-}
+console.log('Environment:', import.meta.env.MODE);
+console.log('Is Development:', isDevelopment);
+console.log('Is Production:', isProduction);
+console.log('API Base URL:', API_BASE_URL);
