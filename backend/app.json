@@ -1,0 +1,38 @@
+{
+    "name": "Spotify Playlist App Backend",
+    "description": "FastAPI backend for Spotify playlist creation",
+    "keywords": ["python", "fastapi", "spotify"],
+    "env": {
+        "SPOTIPY_CLIENT_ID": {
+        "description": "Spotify Developer アプリのClient ID",
+        "required": true
+        },
+        "SPOTIPY_CLIENT_SECRET": {
+        "description": "Spotify Developer アプリのClient Secret",
+        "required": true
+        },
+        "SPOTIPY_REDIRECT_URI": {
+        "description": "Spotify認証後のリダイレクトURI",
+        "value": "https://your-app-frontend.herokuapp.com/auth/callback"
+        },
+        "FRONTEND_URL": {
+        "description": "フロントエンドのURL",
+        "value": "https://your-app-frontend.herokuapp.com"
+        },
+        "ENVIRONMENT": {
+        "description": "実行環境（development/production）",
+        "value": "production"
+        }
+    },
+    "formation": {
+        "web": {
+        "quantity": 1,
+        "size": "eco"
+        }
+    },
+    "buildpacks": [
+        {
+        "url": "heroku/python"
+        }
+    ]
+}

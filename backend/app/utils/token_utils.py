@@ -1,3 +1,4 @@
+import os
 import time
 from datetime import datetime
 import spotipy
@@ -12,6 +13,10 @@ class TokenManager:
             redirect_uri=redirect_uri,
             scope=scope
         )
+        
+        # 環境判定
+        self.environment = os.environ.get("ENVIRONMENT", "development")
+        self.is_production = self.environment == "production"
 
     def get_auth_url(self):
         """認証用のURLを生成して返します。"""
@@ -32,16 +37,26 @@ class TokenManager:
         refresh_token = token_info.get("refresh_token")
         expires_at = token_info.get("expires_at", int(time.time()) + expires_in)
         
-        # Cookieの共通設定
-        # 開発環境では secure=False に設定します。本番環境でHTTPSを使う場合はTrueにします。
-        # path="/" を設定することで、アプリケーション内のどのパスへのリクエストにも
-        # Cookieが送信されるようになります。
-        common_params = {
-            "httponly": True,
-            "secure": False, # 開発中はFalse, 本番(HTTPS)ではTrue
-            "samesite": "lax", # 開発中はlax, 本番(HTTPS)ではlaxまたはstrict
-            "path": "/",
-        }
+        # 環境に応じたCookieセキュリティ設定
+        if self.is_production:
+            # 本番環境：HTTPS対応のセキュアな設定
+            common_params = {
+                "httponly": True,
+                "secure": True,      # HTTPS必須
+                "samesite": "none",  # クロスサイトリクエスト対応
+                "path": "/",
+            }
+        else:
+            # 開発環境：HTTP対応の設定
+            common_params = {
+                "httponly": True,
+                "secure": False,     # HTTP許可
+                "samesite": "lax",   # ローカル開発用
+                "path": "/",
+            }
+
+        # デバッグ用：Cookie設定を出力
+        print(f"Setting cookies with params: {common_params}")
 
         response.set_cookie(key="access_token", value=access_token, max_age=expires_in, **common_params)
         if refresh_token:
@@ -59,12 +74,19 @@ class TokenManager:
 
         # 1. アクセストークンがなければ、即座に認証失敗
         if not access_token:
-            raise HTTPException(status_code=401, detail="アクセストークンが見つかりません。ログインしてください。")
+            raise HTTPException(
+                status_code=401, 
+                detail="アクセストークンが見つかりません。ログインしてください。"
+            )
 
         # 2. トークンの有効期限をチェック (expires_atがない場合は安全のため期限切れとみなす)
         is_expired = True
         if expires_at_str:
-            is_expired = datetime.now().timestamp() > float(expires_at_str) - 60
+            try:
+                is_expired = datetime.now().timestamp() > float(expires_at_str) - 60
+            except ValueError:
+                # expires_at_strが不正な値の場合は期限切れとして扱う
+                is_expired = True
         
         # 3. 有効期限内であれば、現在のトークンを返す
         if not is_expired:
@@ -73,11 +95,19 @@ class TokenManager:
         # 4. トークンが期限切れの場合、リフレッシュを試みる
         refresh_token = request.cookies.get("refresh_token")
         if not refresh_token:
-            raise HTTPException(status_code=401, detail="セッションの有効期限が切れました。再度ログインしてください。")
+            raise HTTPException(
+                status_code=401, 
+                detail="セッションの有効期限が切れました。再度ログインしてください。"
+            )
         
         try:
             new_token_info = self.refresh_token_if_needed(refresh_token)
             self.set_tokens_in_cookie(response, new_token_info)
+            print("Token refreshed successfully")
             return new_token_info["access_token"]
         except Exception as e:
-            raise HTTPException(status_code=401, detail=f"トークンのリフレッシュに失敗しました: {e}")
+            print(f"Token refresh failed: {e}")
+            raise HTTPException(
+                status_code=401, 
+                detail=f"トークンのリフレッシュに失敗しました: {e}"
+            )

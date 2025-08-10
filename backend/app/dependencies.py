@@ -8,11 +8,42 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# 環境判定
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
+IS_PRODUCTION = ENVIRONMENT == "production"
+
 # .envファイルから設定を読み込み
 CLIENT_ID = os.environ.get("SPOTIPY_CLIENT_ID")
 CLIENT_SECRET = os.environ.get("SPOTIPY_CLIENT_SECRET")
-REDIRECT_URI = os.environ.get("SPOTIPY_REDIRECT_URI")
+
+# リダイレクトURIを環境に応じて設定
+def get_redirect_uri():
+    """環境に応じたリダイレクトURIを取得"""
+    if IS_PRODUCTION:
+        # 本番環境：環境変数から取得
+        redirect_uri = os.environ.get("SPOTIPY_REDIRECT_URI")
+        if not redirect_uri:
+            # フォールバック：フロントエンドURLから生成
+            frontend_url = os.environ.get("FRONTEND_URL", "https://your-app-frontend.herokuapp.com")
+            redirect_uri = f"{frontend_url}/auth/callback"
+        return redirect_uri
+    else:
+        # 開発環境：ローカルURL
+        return os.environ.get("SPOTIPY_REDIRECT_URI", "http://localhost:5173/auth/callback")
+
+REDIRECT_URI = get_redirect_uri()
 SCOPE = "playlist-modify-public playlist-modify-private"
+
+# デバッグ用：設定内容を出力
+print(f"Environment: {ENVIRONMENT}")
+print(f"Redirect URI: {REDIRECT_URI}")
+print(f"Client ID: {CLIENT_ID[:8]}..." if CLIENT_ID else "Client ID: Not set")
+
+# 環境変数チェック
+if not CLIENT_ID:
+    raise ValueError("SPOTIPY_CLIENT_ID environment variable is required")
+if not CLIENT_SECRET:
+    raise ValueError("SPOTIPY_CLIENT_SECRET environment variable is required")
 
 # アプリケーション全体で共有するTokenManagerのシングルトンインスタンス
 token_manager = TokenManager(
