@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useToast } from "@chakra-ui/react";
+import { playlistAPI } from "../utils/apiClient";
 import type { Track, TrackQuery, SearchMode } from "../types";
 
 export function useTrackSearch() {
@@ -55,7 +56,7 @@ export function useTrackSearch() {
       query.append("track_name", trackName);
       if (artistName) query.append("artist_name", artistName);
 
-      const res = await fetch(`/api/playlist/search?${query.toString()}`);
+      const res = await playlistAPI.searchTrack(query);
       if (res.ok) {
         const data = await res.json();
         setTracks(data);
@@ -100,13 +101,7 @@ export function useTrackSearch() {
     try {
       const queries = parseBulkInput(artistName, bulkSetlist);
       
-      const res = await fetch('/api/playlist/search/multiple', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(queries),
-      });
+      const res = await playlistAPI.searchMultipleTracks(queries);
 
       if (res.ok) {
         const data = await res.json();

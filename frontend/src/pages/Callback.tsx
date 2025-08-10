@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Center, VStack, Spinner, Text } from "@chakra-ui/react";
+import { authAPI } from "../utils/apiClient";
 
 function Callback() {
   const navigate = useNavigate();
@@ -11,13 +12,7 @@ function Callback() {
     const exchangeCodeForToken = async (code: string) => {
       try {
         // バックエンドに認可コードを送信してトークンを要求
-        const res = await fetch(`/api/auth/token`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ code }),
-        });
+        const res = await authAPI.exchangeToken(code);
 
         if (res.ok) {
           const user = await res.json();

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useToast } from "@chakra-ui/react";
+import { playlistAPI } from "../utils/apiClient";
 import type { Track, PlaylistFormData } from "../types";
 import { useNavigate } from "react-router-dom";
 
@@ -180,13 +181,7 @@ export function usePlaylist() {
         track_uris: playlistTracks.map(track => track.uri),
       };
 
-      const res = await fetch("/api/playlist/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      const res = await playlistAPI.createPlaylist(payload);
 
       if (res.ok) {
         const createdPlaylist = await res.json();

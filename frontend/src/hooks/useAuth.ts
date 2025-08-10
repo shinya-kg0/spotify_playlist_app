@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { authAPI } from "../utils/apiClient";
 import type { UserProfile } from "../types";
 
 export function useAuth() {
@@ -11,7 +12,7 @@ export function useAuth() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await authAPI.getCurrentUser();
         if (res.ok) {
           const userData = await res.json();
           setUser(userData);

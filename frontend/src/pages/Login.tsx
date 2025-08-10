@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Box, Button, Heading, Center, VStack, Alert, AlertTitle, Text } from "@chakra-ui/react";
+import { authAPI } from "../utils/apiClient";
 
 function Login() {
   const [loading, setLoading] = useState(false);
@@ -9,10 +10,7 @@ function Login() {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(`/api/auth/login`, {
-        method: "GET",
-        credentials: "include",
-      });
+      const res = await authAPI.getLoginUrl();
 
       if (res.ok) {
         const data = await res.json();
