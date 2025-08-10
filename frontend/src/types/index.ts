@@ -15,3 +15,10 @@ export interface PlaylistFormData {
   description: string;
   isPublic: boolean;
 }
+
+export interface TrackQuery {
+  track_name: string;
+  artist_name?: string;
+}
+
+export type SearchMode = 'single' | 'bulk';

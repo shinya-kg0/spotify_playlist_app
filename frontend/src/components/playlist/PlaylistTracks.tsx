@@ -33,9 +33,9 @@ export function PlaylistTracks({
   dragOverIndex,
 }: PlaylistTracksProps) {
   return (
-    <Box p={6} borderWidth={1} borderRadius="lg" boxShadow="sm" w="50%">
+    <Box p={6} borderWidth={1} borderRadius="lg" boxShadow="sm" w="100%">
       <Heading as="h2" size="lg" mb={4}>
-        3. プレイリストの曲
+        プレイリストの曲
       </Heading>
       {tracks.length === 0 ? (
         <Text color="gray.500" textAlign="center" py={4}>

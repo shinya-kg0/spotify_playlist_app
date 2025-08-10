@@ -20,7 +20,7 @@ export function usePlaylist() {
   const toast = useToast();
   const navigate = useNavigate();
 
-  // 曲を追加する処理
+  // 単曲を追加する処理
   const addToPlaylist = (track: Track) => {
     if (!playlistTracks.some(t => t.id === track.id)) {
       setPlaylistTracks([...playlistTracks, track]);
@@ -37,6 +37,34 @@ export function usePlaylist() {
         title: "この曲は既に追加されています",
         status: "info",
         duration: 2000,
+        isClosable: true,
+        position: "top",
+      });
+    }
+  };
+
+  // 複数曲を追加する処理（まとめて検索用）
+  const addMultipleToPlaylist = (tracks: Track[]) => {
+    const newTracks: Track[] = [];
+    const duplicateTracks: Track[] = [];
+
+    tracks.forEach(track => {
+      if (!playlistTracks.some(t => t.id === track.id)) {
+        newTracks.push(track);
+      } else {
+        duplicateTracks.push(track);
+      }
+    });
+
+    if (newTracks.length > 0) {
+      setPlaylistTracks(prev => [...prev, ...newTracks]);
+    }
+
+    if (duplicateTracks.length > 0) {
+      toast({
+        title: `${duplicateTracks.length}曲は既に追加済みです`,
+        status: "info",
+        duration: 3000,
         isClosable: true,
         position: "top",
       });
@@ -219,6 +247,7 @@ export function usePlaylist() {
     draggedIndex,
     dragOverIndex,
     addToPlaylist,
+    addMultipleToPlaylist,
     removeFromPlaylist,
     handleDragStart,
     handleDragOver,

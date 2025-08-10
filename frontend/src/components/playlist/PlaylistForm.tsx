@@ -49,7 +49,7 @@ export function PlaylistForm({
 
   return (
     <Box p={6} borderWidth={1} borderRadius="lg" boxShadow="sm">
-      <Heading as="h2" size="lg" mb={4}>4. プレイリストを作成</Heading>
+      <Heading as="h2" size="lg" mb={4}> プレイリストを作成</Heading>
       <VStack spacing={4}>
         <FormControl isRequired>
           <FormLabel>プレイリスト名</FormLabel>
@@ -85,7 +85,7 @@ export function PlaylistForm({
         <Button
           colorScheme="teal"
           size="lg"
-          width="50%"
+          width="100%"
           onClick={onCreatePlaylist}
           isLoading={creating}
           loadingText="作成中..."

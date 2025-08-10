@@ -32,6 +32,7 @@ function Result() {
   return (
     <Center h="100vh">
       <Box
+        w={"90vw"}
         p={10}
         borderWidth={1}
         borderRadius="lg"

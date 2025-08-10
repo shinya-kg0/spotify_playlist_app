@@ -5,7 +5,6 @@ import {
   AlertTitle,
   Center,
   Heading,
-  HStack,
   Spinner,
   Text,
   VStack,
@@ -22,13 +21,26 @@ function Setlist() {
   const { user, loading, error: authError } = useAuth();
   
   const {
+    // タブ関連
+    searchMode,
+    handleTabChange,
+    
+    // 単曲検索関連
     trackName,
     setTrackName,
+    tracks,
+    handleSingleSearch,
+    
+    // まとめて検索関連
+    bulkSetlist,
+    setBulkSetlist,
+    bulkLoading,
+    handleBulkSearch,
+    
+    // 共通
     artistName,
     setArtistName,
-    tracks,
     error: searchError,
-    handleSearch,
   } = useTrackSearch();
 
   const {
@@ -39,6 +51,7 @@ function Setlist() {
     draggedIndex,
     dragOverIndex,
     addToPlaylist,
+    addMultipleToPlaylist,
     removeFromPlaylist,
     handleDragStart,
     handleDragOver,
@@ -49,6 +62,11 @@ function Setlist() {
   } = usePlaylist();
 
   const error = authError || searchError;
+
+  // まとめて検索のハンドラー
+  const handleBulkSearchWithPlaylist = () => {
+    handleBulkSearch(addMultipleToPlaylist);
+  };
 
   if (loading) {
     return (
@@ -80,17 +98,23 @@ function Setlist() {
 
         {/* 1. 曲を検索 */}
         <SearchSection
+          searchMode={searchMode}
+          onTabChange={handleTabChange}
           trackName={trackName}
           setTrackName={setTrackName}
+          onSingleSearch={handleSingleSearch}
+          bulkSetlist={bulkSetlist}
+          setBulkSetlist={setBulkSetlist}
+          bulkLoading={bulkLoading}
+          onBulkSearch={handleBulkSearchWithPlaylist}
           artistName={artistName}
           setArtistName={setArtistName}
-          onSearch={handleSearch}
         />
 
         {/* 2. 検索結果 & 3. プレイリストの曲 */}
-        <HStack spacing={8} align="start">
-          <SearchResults tracks={tracks} onAddTrack={addToPlaylist} />
-          
+          {searchMode === "single" && (
+            <SearchResults tracks={tracks} onAddTrack={addToPlaylist} />
+          )}
           <PlaylistTracks
             tracks={playlistTracks}
             onRemoveTrack={removeFromPlaylist}
@@ -102,7 +126,6 @@ function Setlist() {
             draggedIndex={draggedIndex}
             dragOverIndex={dragOverIndex}
           />
-        </HStack>
 
         {/* 4. プレイリスト作成設定 */}
         <PlaylistForm

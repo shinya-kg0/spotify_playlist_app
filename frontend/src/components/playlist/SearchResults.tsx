@@ -16,8 +16,8 @@ interface SearchResultsProps {
 
 export function SearchResults({ tracks, onAddTrack }: SearchResultsProps) {
   return (
-    <Box p={6} borderWidth={1} borderRadius="lg" boxShadow="sm" w="50%">
-      <Heading as="h2" size="lg" mb={4}>2. 検索結果</Heading>
+    <Box p={6} borderWidth={1} borderRadius="lg" boxShadow="sm" w="100%">
+      <Heading as="h2" size="lg" mb={4}> 検索結果</Heading>
       {tracks.length === 0 ? (
         <Text color="gray.500" textAlign="center" py={4}>
           曲名を入力して検索してください
