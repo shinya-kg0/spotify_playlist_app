@@ -8,8 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "serve -s dist -l $PORT",
-    "heroku-postbuild": "npm run build"
+    "heroku-postbuild": "npm run build && npm run copy-to-backend",
+    "copy-to-backend": "mkdir -p ../backend/static && cp -r dist/* ../backend/static/"
   },
   "dependencies": {
     "@chakra-ui/icons": "^2.0.19",
@@ -21,8 +21,7 @@
     "framer-motion": "^11.2.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.25.1",
-    "serve": "^14.2.4"
+    "react-router-dom": "^6.25.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",

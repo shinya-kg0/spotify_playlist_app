@@ -1,0 +1,11 @@
+{
+    "name": "spotify-playlist-integrated",
+    "private": true,
+    "scripts": {
+    "heroku-postbuild": "cd frontend && npm ci --omit=dev=false && npm run build && mkdir -p ../backend/app/static && cp -r dist/* ../backend/app/static/"
+    },
+    "engines": {
+        "node": "20.x",
+        "npm": "10.x"
+    }
+}

@@ -1,0 +1,40 @@
+{
+    "name": "Spotify Playlist App (Integrated)",
+    "description": "React + FastAPI Spotify playlist creator",
+    "keywords": ["python", "fastapi", "react", "spotify"],
+    "buildpacks": [
+        {
+            "url": "heroku/nodejs"
+        },
+        {
+            "url": "heroku/python"
+        }
+    ],
+    "env": {
+        "SPOTIPY_CLIENT_ID": {
+            "description": "Spotify Developer アプリのClient ID",
+            "required": true
+        },
+        "SPOTIPY_CLIENT_SECRET": {
+            "description": "Spotify Developer アプリのClient Secret",
+            "required": true
+        },
+        "SPOTIPY_REDIRECT_URI": {
+            "description": "Spotify認証後のリダイレクトURI（統合後は同一ドメイン）",
+            "value": "https://create-playlist-app-6f538d596202.herokuapp.com/auth/callback"
+        },
+        "ENVIRONMENT": {
+            "description": "実行環境",
+            "value": "production"
+        }
+    },
+    "scripts": {
+        "postdeploy": "echo 'Deploy completed successfully'"
+    },
+    "formation": {
+        "web": {
+            "quantity": 1,
+            "size": "eco"
+        }
+    }
+}

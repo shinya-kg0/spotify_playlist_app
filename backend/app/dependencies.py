@@ -20,13 +20,13 @@ CLIENT_SECRET = os.environ.get("SPOTIPY_CLIENT_SECRET")
 def get_redirect_uri():
     """環境に応じたリダイレクトURIを取得"""
     if IS_PRODUCTION:
-        # 本番環境：環境変数から取得
-        redirect_uri = os.environ.get("SPOTIPY_REDIRECT_URI")
-        if not redirect_uri:
-            # フォールバック：フロントエンドURLから生成
-            frontend_url = os.environ.get("FRONTEND_URL", "https://your-app-frontend.herokuapp.com")
-            redirect_uri = f"{frontend_url}/auth/callback"
-        return redirect_uri
+        # 本番環境：統合後は同一ドメイン
+        app_name = os.environ.get("SPOTIPY_REDIRECT_URI")
+        if app_name:
+            return "https://create-playlist-app-6f538d596202.herokuapp.com/auth/callback"
+        else:
+            # フォールバック
+            return os.environ.get("SPOTIPY_REDIRECT_URI", "https://create-playlist-app-6f538d596202.herokuapp.com/")
     else:
         # 開発環境：ローカルURL
         return os.environ.get("SPOTIPY_REDIRECT_URI", "http://localhost:5173/auth/callback")
