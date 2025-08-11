@@ -1,8 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Callback from "./pages/Callback";
-import Setlist from "./pages/Setlist"; // 今後作成するページ
+import Setlist from "./pages/Setlist";
 import Result from "./pages/Result";
+import Debug from "./pages/Debug"; // デバッグページを追加
 
 function App() {
   return (
@@ -12,10 +13,12 @@ function App() {
         <Route path="/login" element={<Login />} />
         {/* Spotifyからのコールバックを受け取るページ */}
         <Route path="/auth/callback" element={<Callback />} />
-        {/* ログイン後のメインページ（今後作成） */}
+        {/* ログイン後のメインページ */}
         <Route path="/setlist" element={<Setlist />} />
         {/* プレイリスト作成完了ページ */}
         <Route path="/result" element={<Result />} />
+        {/* デバッグページ - モバイルでのトラブルシューティング用 */}
+        <Route path="/debug" element={<Debug />} />
         {/* デフォルトはログインページに */}
         <Route path="/" element={<Login />} />
       </Routes>
