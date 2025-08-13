@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Box, Button, Heading, Center, VStack, Alert, AlertTitle, Text } from "@chakra-ui/react";
+import { Box, Button, Heading, Center, VStack, Alert, AlertTitle, Text, Image } from "@chakra-ui/react";
 import { authAPI } from "../utils/apiClient";
+import spotifyIcon from "../assets/image.png"; // assetsから画像をインポート
 
 function Login() {
   const [loading, setLoading] = useState(false);
@@ -39,10 +40,11 @@ function Login() {
           <Heading as="h1" size="lg" mb={4}>せとぷり！</Heading>
           <Text mb={4}>セットリストからプレイリストへ</Text>
           <Button
-            colorScheme="green"
+            colorScheme="teal"
             onClick={handleLogin}
             isLoading={loading}
             loadingText="ログイン中..."
+            leftIcon={<Image src={spotifyIcon} boxSize="24px" alt="Spotify Logo" />}
           >
             Spotifyでログイン
           </Button>

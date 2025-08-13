@@ -21,7 +21,7 @@ WORKDIR /app
 RUN chown -R $USER:$USER /app
 
 # requirementsインストール（root権限）
-COPY requirements.txt .
+COPY app/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # アプリコードコピー
