@@ -48,16 +48,10 @@ function Setlist() {
     formData,
     setFormData,
     creating,
-    draggedIndex,
-    dragOverIndex,
     addToPlaylist,
     addMultipleToPlaylist,
     removeFromPlaylist,
-    handleDragStart,
-    handleDragOver,
-    handleDrop,
-    handleDragEnter,
-    handleDragLeave,
+    handleTracksReorder, // 新しい関数を使用
     createPlaylist,
   } = usePlaylist();
 
@@ -112,20 +106,14 @@ function Setlist() {
         />
 
         {/* 2. 検索結果 & 3. プレイリストの曲 */}
-          {searchMode === "single" && (
-            <SearchResults tracks={tracks} onAddTrack={addToPlaylist} />
-          )}
-          <PlaylistTracks
-            tracks={playlistTracks}
-            onRemoveTrack={removeFromPlaylist}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            onDragEnter={handleDragEnter}
-            onDragLeave={handleDragLeave}
-            draggedIndex={draggedIndex}
-            dragOverIndex={dragOverIndex}
-          />
+        {searchMode === "single" && (
+          <SearchResults tracks={tracks} onAddTrack={addToPlaylist} />
+        )}
+        <PlaylistTracks
+          tracks={playlistTracks}
+          onTracksReorder={handleTracksReorder} // 新しいプロパティ
+          onRemoveTrack={removeFromPlaylist}
+        />
 
         {/* 4. プレイリスト作成設定 */}
         <PlaylistForm

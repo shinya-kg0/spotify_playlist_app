@@ -13,11 +13,6 @@ export function usePlaylist() {
   });
   const [creating, setCreating] = useState(false);
   
-  // ドラッグ&ドロップの状態管理
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const [dragOverTimeout, setDragOverTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
-  
   const toast = useToast();
   const navigate = useNavigate();
 
@@ -74,14 +69,6 @@ export function usePlaylist() {
 
   // 曲を削除する処理
   const removeFromPlaylist = (track: Track) => {
-    // ドラッグ関連の状態をクリア
-    if (dragOverTimeout) {
-      clearTimeout(dragOverTimeout);
-      setDragOverTimeout(null);
-    }
-    setDragOverIndex(null);
-    setDraggedIndex(null);
-    
     setPlaylistTracks(playlistTracks.filter(t => t.id !== track.id));
     toast({
       title: "曲を削除しました",
@@ -93,70 +80,17 @@ export function usePlaylist() {
     });
   };
 
-  // ドラッグ開始時の処理
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    setDraggedIndex(index);
-    e.dataTransfer.effectAllowed = "move";
-  };
-
-  // ドラッグオーバー時の処理
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-  };
-
-  // ドロップ時の処理
-  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
-    e.preventDefault();
-    
-    // タイムアウトをクリア
-    if (dragOverTimeout) {
-      clearTimeout(dragOverTimeout);
-      setDragOverTimeout(null);
-    }
-    setDragOverIndex(null);
-    
-    if (draggedIndex === null || draggedIndex === dropIndex) {
-      setDraggedIndex(null);
-      return;
-    }
-
-    const newTracks = [...playlistTracks];
-    const draggedTrack = newTracks[draggedIndex];
-    
-    // 元の位置から削除
-    newTracks.splice(draggedIndex, 1);
-    
-    // 新しい位置に挿入
-    newTracks.splice(dropIndex, 0, draggedTrack);
-    
+  // ドラッグ&ドロップによる曲順変更処理（新規追加）
+  const handleTracksReorder = (newTracks: Track[]) => {
     setPlaylistTracks(newTracks);
-    setDraggedIndex(null);
-  };
-
-  // ドラッグエンター時の処理（ディレイ付き）
-  const handleDragEnter = (index: number) => {
-    // 既存のタイムアウトをクリア
-    if (dragOverTimeout) {
-      clearTimeout(dragOverTimeout);
-    }
-    
-    // 200msのディレイでハイライト表示
-    const timeout = setTimeout(() => {
-      setDragOverIndex(index);
-    }, 200);
-    
-    setDragOverTimeout(timeout);
-  };
-
-  // ドラッグリーブ時の処理
-  const handleDragLeave = () => {
-    // タイムアウトをクリア
-    if (dragOverTimeout) {
-      clearTimeout(dragOverTimeout);
-      setDragOverTimeout(null);
-    }
-    setDragOverIndex(null);
+    // 軽量なフィードバック（オプション）
+    toast({
+      title: "曲順を変更しました",
+      status: "success",
+      duration: 1000,
+      isClosable: true,
+      position: "top",
+    });
   };
 
   // プレイリスト作成処理
@@ -201,6 +135,7 @@ export function usePlaylist() {
           description: "",
           isPublic: false,
         });
+        
         // Result へ state 経由でプレイリストURLを渡す
         const playlistUrl =
           createdPlaylist?.external_urls?.spotify ??
@@ -239,16 +174,10 @@ export function usePlaylist() {
     formData,
     setFormData,
     creating,
-    draggedIndex,
-    dragOverIndex,
     addToPlaylist,
     addMultipleToPlaylist,
     removeFromPlaylist,
-    handleDragStart,
-    handleDragOver,
-    handleDrop,
-    handleDragEnter,
-    handleDragLeave,
+    handleTracksReorder, // 新しい関数
     createPlaylist,
   };
 }
