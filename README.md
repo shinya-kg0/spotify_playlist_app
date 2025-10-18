@@ -1,4 +1,4 @@
-# せとぷり！ - Spotify Playlist Creator
+# Spotify Playlist Creator
 
 **セットリストからプレイリストへ** - コンサートのセットリストから簡単にSpotifyプレイリストを作成できるWebアプリケーション
 
